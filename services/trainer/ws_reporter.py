@@ -90,8 +90,13 @@ class WsReporter:
         acc_val: float,
         tone_accs: dict,
         is_best: bool,
+        *,
+        pcc_val: float | None = None,
+        pcc_train: float | None = None,
+        mse_per_head: dict[str, float] | None = None,
+        score_distribution: dict[str, float] | None = None,
     ):
-        self.send({
+        payload: dict[str, Any] = {
             "type": "epoch_end",
             "epoch": epoch,
             "loss_train": round(loss_train, 3),
@@ -100,7 +105,19 @@ class WsReporter:
             "acc_val": round(acc_val, 1),
             "tone_accs": tone_accs,
             "is_best": is_best,
-        })
+        }
+        # Phase 3 regression fields (only sent when present)
+        if pcc_val is not None:
+            payload["pcc_val"] = round(pcc_val, 4)
+        if pcc_train is not None:
+            payload["pcc_train"] = round(pcc_train, 4)
+        if mse_per_head is not None:
+            payload["mse_per_head"] = {k: round(v, 3) for k, v in mse_per_head.items()}
+        if score_distribution is not None:
+            payload["score_distribution"] = {
+                k: round(v, 2) for k, v in score_distribution.items()
+            }
+        self.send(payload)
 
     def send_checkpoint(
         self, epoch: int, path: str, val_acc: float, is_best: bool

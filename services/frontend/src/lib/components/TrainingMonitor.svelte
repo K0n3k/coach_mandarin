@@ -11,13 +11,23 @@
     { tag: 'T5', name: 'Neutre', color: '#9b6dff' }
   ] as const
 
-  type ToneKey = 'T1' | 'T2' | 'T3' | 'T4' | 'T5'
+  const MSE_HEADS = [
+    { key: 'score_global', label: 'Global', color: '#5b8dee' },
+    { key: 'score_ton', label: 'Ton', color: '#f0a030' },
+    { key: 'score_initiale', label: 'Initiale', color: '#3ecf7a' },
+    { key: 'score_finale', label: 'Finale', color: '#9b6dff' }
+  ] as const
 
-  // Canvas refs — 4 only
+  type ToneKey = 'T1' | 'T2' | 'T3' | 'T4' | 'T5'
+  type MseKey = 'score_global' | 'score_ton' | 'score_initiale' | 'score_finale'
+
+  // Canvas refs — 4 base + 2 phase 3
   let cLoss: HTMLCanvasElement
   let cLossEp: HTMLCanvasElement
   let cAcc: HTMLCanvasElement
   let cTone: HTMLCanvasElement
+  let cPcc: HTMLCanvasElement
+  let cMse: HTMLCanvasElement
 
   // Log auto-scroll ref
   let logEl: HTMLDivElement
@@ -44,6 +54,10 @@
   let logCount = 0
   let samplesSummary = ''
   let samplesDetail = ''
+  let isPhase3 = false
+  let lastStd = 0
+  let stdBadgeColor = '#3ecf7a'
+  let stdBadgeLabel = '—'
 
   function fmtTime(sec: number): string {
     if (sec < 60) return `${Math.round(sec)} s`
@@ -109,6 +123,17 @@
       samplesDetail = ''
     }
 
+    // Auto-detect phase 3 from PCC data presence
+    isPhase3 = s.pcc_epoch_val.length > 0
+
+    // Std badge for phase 3
+    if (isPhase3 && s.score_dist_std.length > 0) {
+      lastStd = s.score_dist_std[s.score_dist_std.length - 1]
+      if (lastStd >= 10) { stdBadgeColor = '#3ecf7a'; stdBadgeLabel = `std ${lastStd.toFixed(1)}` }
+      else if (lastStd >= 5) { stdBadgeColor = '#f0a030'; stdBadgeLabel = `std ${lastStd.toFixed(1)}` }
+      else { stdBadgeColor = '#e05555'; stdBadgeLabel = `std ${lastStd.toFixed(1)} ⚠` }
+    }
+
     // Auto-scroll logs if new entries — use setTimeout to ensure DOM has updated
     if (s.logs.length !== logCount) {
       logCount = s.logs.length
@@ -132,7 +157,7 @@
 
   // Generic chart draw
   interface ChartDataset { data: number[]; color: string; lw?: number; dash?: boolean; dots?: boolean }
-  interface ChartOpts { min?: number; max?: number; pL?: number; pB?: number; xLabels?: string[] }
+  interface ChartOpts { min?: number; max?: number; pL?: number; pB?: number; xLabels?: string[]; refLine?: number; refColor?: string }
 
   function drawChart(cv: HTMLCanvasElement | undefined, datasets: ChartDataset[], opts: ChartOpts = {}) {
     if (!cv) return
@@ -173,6 +198,20 @@
         cx.textAlign = 'center'
         cx.fillText(l, x, H - 3 * dpr)
       })
+    }
+
+    // Reference line (e.g. PCC 0.70 target)
+    if (opts.refLine !== undefined) {
+      const refY = pT + gh - norm(opts.refLine) * gh
+      cx.strokeStyle = opts.refColor || 'rgba(255,255,255,.25)'
+      cx.lineWidth = 1 * dpr
+      cx.setLineDash([6 * dpr, 4 * dpr])
+      cx.beginPath(); cx.moveTo(pL, refY); cx.lineTo(W - pR, refY); cx.stroke()
+      cx.setLineDash([])
+      cx.fillStyle = opts.refColor || 'rgba(255,255,255,.25)'
+      cx.font = `${9 * dpr}px JetBrains Mono,monospace`
+      cx.textAlign = 'left'
+      cx.fillText(String(opts.refLine), pL + 4 * dpr, refY - 4 * dpr)
     }
 
     datasets.forEach(ds => {
@@ -236,6 +275,23 @@
       lw: 1.5,
       dots: true
     })), { min: 0, max: 100, xLabels: toneLabels })
+
+    // Phase 3 charts
+    if (isPhase3) {
+      const pccLabels = s.pcc_epoch_val.map((_: number, i: number) => `E${i + 1}`)
+      drawChart(cPcc, [
+        { data: s.pcc_epoch_train, color: '#5b8dee', lw: 1.5, dash: true, dots: false },
+        { data: s.pcc_epoch_val, color: '#3ecf7a', lw: 2, dots: true }
+      ], { min: 0, max: 1, xLabels: pccLabels, refLine: 0.70, refColor: 'rgba(240,160,48,.4)' })
+
+      const mseLabels = s.mse_epoch.score_global.map((_: number, i: number) => `E${i + 1}`)
+      drawChart(cMse, MSE_HEADS.map(h => ({
+        data: s.mse_epoch[h.key as MseKey],
+        color: h.color,
+        lw: 1.5,
+        dots: true
+      })), { xLabels: mseLabels })
+    }
   }
 
   onMount(() => {
@@ -306,16 +362,29 @@
 
   <!-- KPI strip -->
   <div class="kpi-strip">
-    <div class="kpi">
-      <div class="kl">Best acc.</div>
-      <div class="kv" style="color:#3ecf7a">{s.best_acc.toFixed(1)}%</div>
-      <div class="ks">Epoch {s.best_acc_epoch}</div>
-    </div>
-    <div class="kpi">
-      <div class="kl">Best loss</div>
-      <div class="kv" style="color:#f0a030">{s.best_loss === Infinity ? '—' : s.best_loss.toFixed(3)}</div>
-      <div class="ks">{s.best_loss_epoch > 0 ? `Val · ep${s.best_loss_epoch}` : '—'}</div>
-    </div>
+    {#if isPhase3}
+      <div class="kpi">
+        <div class="kl">Best PCC</div>
+        <div class="kv" style="color:#3ecf7a">{s.best_pcc.toFixed(4)}</div>
+        <div class="ks">Epoch {s.best_pcc_epoch}</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Std scores</div>
+        <div class="kv" style="color:{stdBadgeColor}">{stdBadgeLabel}</div>
+        <div class="ks" style="color:{stdBadgeColor}">{lastStd >= 10 ? 'ok' : lastStd >= 5 ? 'faible' : 'collapse'}</div>
+      </div>
+    {:else}
+      <div class="kpi">
+        <div class="kl">Best acc.</div>
+        <div class="kv" style="color:#3ecf7a">{s.best_acc.toFixed(1)}%</div>
+        <div class="ks">Epoch {s.best_acc_epoch}</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Best loss</div>
+        <div class="kv" style="color:#f0a030">{s.best_loss === Infinity ? '—' : s.best_loss.toFixed(3)}</div>
+        <div class="ks">{s.best_loss_epoch > 0 ? `Val · ep${s.best_loss_epoch}` : '—'}</div>
+      </div>
+    {/if}
     <div class="kpi">
       <div class="kl">Epoch</div>
       <div class="kv" style="color:#fff">{s.epoch}<span class="kv-den"> / {s.config.total_epochs}</span></div>
@@ -465,7 +534,7 @@
     <canvas bind:this={cLoss} style="height:200px"></canvas>
   </div>
 
-  <!-- Bottom 3-col: Loss/epoch | Accuracy/epoch | Tone -->
+  <!-- Bottom 3-col: Loss/epoch | Accuracy or PCC | Tone or MSE -->
   <div class="bot-row">
     <div class="bot-col">
       <div class="chart-lbl">
@@ -475,33 +544,56 @@
       </div>
       <canvas bind:this={cLossEp} style="height:150px"></canvas>
     </div>
-    <div class="bot-col">
-      <div class="chart-lbl">
-        <span class="sec-lbl">Accuracy / epoch</span>
-        <span class="dot-legend" style="color:#5b8dee">● Train</span>
-        <span class="dot-legend" style="color:#3ecf7a">● Val</span>
+    {#if isPhase3}
+      <div class="bot-col">
+        <div class="chart-lbl">
+          <span class="sec-lbl">PCC / epoch</span>
+          <span class="dot-legend" style="color:#5b8dee">- - Train</span>
+          <span class="dot-legend" style="color:#3ecf7a">● Val</span>
+          <span class="dot-legend" style="color:rgba(240,160,48,.4)">— 0.70</span>
+        </div>
+        <canvas bind:this={cPcc} style="height:150px"></canvas>
       </div>
-      <canvas bind:this={cAcc} style="height:150px"></canvas>
-    </div>
-    <div class="bot-col">
-      <div class="chart-lbl">
-        <span class="sec-lbl">Accuracy par ton</span>
-        <div class="tone-legend">
-          {#each TONES as t}
-            <span class="dot-legend" style="color:{t.color}">● {t.tag}</span>
+      <div class="bot-col">
+        <div class="chart-lbl">
+          <span class="sec-lbl">MSE par tête</span>
+          <div class="tone-legend">
+            {#each MSE_HEADS as h}
+              <span class="dot-legend" style="color:{h.color}">● {h.label}</span>
+            {/each}
+          </div>
+        </div>
+        <canvas bind:this={cMse} style="height:150px"></canvas>
+      </div>
+    {:else}
+      <div class="bot-col">
+        <div class="chart-lbl">
+          <span class="sec-lbl">Accuracy / epoch</span>
+          <span class="dot-legend" style="color:#5b8dee">● Train</span>
+          <span class="dot-legend" style="color:#3ecf7a">● Val</span>
+        </div>
+        <canvas bind:this={cAcc} style="height:150px"></canvas>
+      </div>
+      <div class="bot-col">
+        <div class="chart-lbl">
+          <span class="sec-lbl">Accuracy par ton</span>
+          <div class="tone-legend">
+            {#each TONES as t}
+              <span class="dot-legend" style="color:{t.color}">● {t.tag}</span>
+            {/each}
+          </div>
+        </div>
+        <canvas bind:this={cTone} style="height:150px"></canvas>
+        <div class="tone-grid">
+          {#each lastToneAccs as t}
+            <div class="tone-card">
+              <div class="tone-tag" style="color:{t.color}">{t.tag}</div>
+              <div class="tone-val" style="color:{t.color}">{t.val.toFixed(1)}%</div>
+            </div>
           {/each}
         </div>
       </div>
-      <canvas bind:this={cTone} style="height:150px"></canvas>
-      <div class="tone-grid">
-        {#each lastToneAccs as t}
-          <div class="tone-card">
-            <div class="tone-tag" style="color:{t.color}">{t.tag}</div>
-            <div class="tone-val" style="color:{t.color}">{t.val.toFixed(1)}%</div>
-          </div>
-        {/each}
-      </div>
-    </div>
+    {/if}
   </div>
 
 </div>

@@ -53,6 +53,13 @@ function initial(): TrainingStore {
     best_acc_epoch: 0,
     best_loss: Infinity,
     best_loss_epoch: 0,
+    pcc_epoch_train: [],
+    pcc_epoch_val: [],
+    mse_epoch: { score_global: [], score_ton: [], score_initiale: [], score_finale: [] },
+    best_pcc: 0,
+    best_pcc_epoch: 0,
+    score_dist_mean: [],
+    score_dist_std: [],
     logs: []
   }
 }
@@ -112,6 +119,11 @@ export function applyEpochEndEvent(ev: EpochEndEvent) {
   training.update(s => {
     const newBestAcc = ev.acc_val > s.best_acc
     const newBestLoss = ev.loss_val < s.best_loss
+
+    // Phase 3 regression fields
+    const hasPcc = ev.pcc_val !== undefined
+    const newBestPcc = hasPcc && ev.pcc_val! > s.best_pcc
+
     return {
       ...s,
       loss_epoch_train: [...s.loss_epoch_train, ev.loss_train],
@@ -128,7 +140,20 @@ export function applyEpochEndEvent(ev: EpochEndEvent) {
       best_acc: newBestAcc ? ev.acc_val : s.best_acc,
       best_acc_epoch: newBestAcc ? ev.epoch : s.best_acc_epoch,
       best_loss: newBestLoss ? ev.loss_val : s.best_loss,
-      best_loss_epoch: newBestLoss ? ev.epoch : s.best_loss_epoch
+      best_loss_epoch: newBestLoss ? ev.epoch : s.best_loss_epoch,
+      // Phase 3
+      pcc_epoch_train: ev.pcc_train !== undefined ? [...s.pcc_epoch_train, ev.pcc_train] : s.pcc_epoch_train,
+      pcc_epoch_val: hasPcc ? [...s.pcc_epoch_val, ev.pcc_val!] : s.pcc_epoch_val,
+      mse_epoch: ev.mse_per_head ? {
+        score_global: [...s.mse_epoch.score_global, ev.mse_per_head.score_global],
+        score_ton: [...s.mse_epoch.score_ton, ev.mse_per_head.score_ton],
+        score_initiale: [...s.mse_epoch.score_initiale, ev.mse_per_head.score_initiale],
+        score_finale: [...s.mse_epoch.score_finale, ev.mse_per_head.score_finale]
+      } : s.mse_epoch,
+      best_pcc: newBestPcc ? ev.pcc_val! : s.best_pcc,
+      best_pcc_epoch: newBestPcc ? ev.epoch : s.best_pcc_epoch,
+      score_dist_mean: ev.score_distribution ? [...s.score_dist_mean, ev.score_distribution.mean] : s.score_dist_mean,
+      score_dist_std: ev.score_distribution ? [...s.score_dist_std, ev.score_distribution.std] : s.score_dist_std
     }
   })
 }

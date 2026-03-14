@@ -30,6 +30,7 @@ from curriculum import (
 from dataset import MandarinDataset, build_phoneme_vocab, collate_fn
 from metrics import TONE_NAMES, AccuracyTracker
 from model import MandarinCoachModel
+from watch_training import TrainingWatcher
 from ws_reporter import WsReporter
 
 # ── Phase defaults ──────────────────────────────────────────
@@ -512,6 +513,7 @@ def main():
     # Training
     best_val_acc = 0.0
     no_improve = 0
+    watcher = TrainingWatcher()
 
     print(f"\n  Starting training from epoch {start_epoch}...\n")
 
@@ -574,6 +576,12 @@ def main():
             acc_val=val_acc,
             tone_accs=tone_accs,
             is_best=is_best,
+        )
+
+        # Passive alerts
+        watcher.check(
+            epoch, phase,
+            tone_accs=tone_accs,
         )
 
         # Save checkpoint

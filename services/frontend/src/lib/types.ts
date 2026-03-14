@@ -82,6 +82,18 @@ export interface ToneAccs {
   T5: number
 }
 
+export interface MsePerHead {
+  score_global: number
+  score_ton: number
+  score_initiale: number
+  score_finale: number
+}
+
+export interface ScoreDistribution {
+  mean: number
+  std: number
+}
+
 export interface EpochEndEvent {
   type: 'epoch_end'
   run_id: string
@@ -92,6 +104,11 @@ export interface EpochEndEvent {
   acc_val: number
   tone_accs: ToneAccs
   is_best: boolean
+  // Phase 3 regression fields (optional — absent for phases 1-2)
+  pcc_val?: number
+  pcc_train?: number
+  mse_per_head?: MsePerHead
+  score_distribution?: ScoreDistribution
 }
 
 export interface CheckpointEvent {
@@ -182,6 +199,15 @@ export interface TrainingStore {
   best_acc_epoch: number
   best_loss: number
   best_loss_epoch: number
+
+  // Phase 3 regression metrics
+  pcc_epoch_train: number[]
+  pcc_epoch_val: number[]
+  mse_epoch: { score_global: number[]; score_ton: number[]; score_initiale: number[]; score_finale: number[] }
+  best_pcc: number
+  best_pcc_epoch: number
+  score_dist_mean: number[]
+  score_dist_std: number[]
 
   // Logs
   logs: LogEntry[]
