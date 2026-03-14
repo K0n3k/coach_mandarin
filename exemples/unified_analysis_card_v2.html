@@ -1,0 +1,220 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06080d;font-family:'IBM Plex Sans',sans-serif;padding:16px;color:#b8bfcc}
+
+.card{background:#0d1018;border:1px solid #1a2035;border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.5)}
+
+/* Header */
+.card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 12px;border-bottom:1px solid #1a2035}
+.head-left{display:flex;flex-direction:column;gap:4px}
+.head-enonce{font-family:'Noto Serif SC',serif;font-size:18px;color:#fff;letter-spacing:.06em}
+.head-trad{font-size:11px;color:#3d4a62;font-style:italic}
+.head-right{display:flex;align-items:baseline;gap:4px}
+.score-val{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;color:#fff;line-height:1}
+.score-den{font-size:11px;color:#2e3a55;font-family:'JetBrains Mono',monospace}
+
+.graph-zone{position:relative;cursor:default}
+canvas#f0{display:block;width:100%}
+.hit-strip{display:flex;position:absolute;bottom:0;left:0;right:0;height:56px}
+.hit{flex:1;cursor:pointer}
+
+.legend{display:flex;gap:14px;padding:7px 18px;border-top:1px solid #1a2035;border-bottom:1px solid #1a2035}
+.leg{display:flex;align-items:center;gap:5px;font-size:9px;color:#2e3a55;font-family:'JetBrains Mono',monospace}
+.ll{width:20px;height:2px;border-radius:1px}
+.ld{width:20px;height:0;border-top:2px dashed}
+
+.detail-strip{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid #1a2035;min-height:52px}
+.ds-char{font-family:'Noto Serif SC',serif;font-size:30px;line-height:1}
+.ds-meta{display:flex;flex-direction:column;gap:2px;flex:0 0 auto}
+.ds-py{font-family:'JetBrains Mono',monospace;font-size:11px}
+.ds-tr{font-size:10px;color:#3d4a60}
+.ds-bars{flex:1;display:flex;flex-direction:column;gap:3px}
+.br{display:flex;align-items:center;gap:6px}
+.bl{font-size:8px;color:#2e3a55;width:50px;text-align:right;font-family:'JetBrains Mono',monospace}
+.bt{flex:1;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.bf{height:100%;border-radius:2px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.bv{font-family:'JetBrains Mono',monospace;font-size:8px;width:20px}
+.ds-hint{font-size:9px;font-style:italic;flex:0 0 200px;line-height:1.5;color:#f0a030;padding-left:8px;border-left:1px solid #1a2035}
+
+.feedback{padding:14px 18px}
+.fb-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#2e3a55;margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+.fb-body{font-size:12px;line-height:1.9;color:#8892a4}
+.fb-body .zh{font-family:'Noto Serif SC',serif;font-size:13px;color:#fff;cursor:pointer;border-bottom:1px dotted rgba(255,255,255,.2);transition:color .12s,border-color .12s;display:inline-block;margin:0 1px}
+.fb-body .zh:hover{color:#5b8dee;border-color:#5b8dee}
+.fb-body .zh.playing{color:#5b8dee}
+.fb-body .py-ann{font-size:9px;font-family:'JetBrains Mono',monospace;color:#2e3a55;margin-left:1px}
+</style>
+
+<div class="card">
+
+  <div class="card-head">
+    <div class="head-left">
+      <span class="head-enonce">你好，谢谢你。</span>
+      <span class="head-trad">Bonjour, merci à toi.</span>
+    </div>
+    <div class="head-right">
+      <span class="score-val">72</span>
+      <span class="score-den">/ 100</span>
+    </div>
+  </div>
+
+  <div class="graph-zone" id="gzone">
+    <canvas id="f0" height="220"></canvas>
+    <div class="hit-strip" id="hit-strip"></div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="ld" style="border-color:rgba(91,141,238,.45)"></div>attendu</div>
+    <div class="leg"><div class="ll" style="background:#3ecf7a"></div>≥ 80</div>
+    <div class="leg"><div class="ll" style="background:#5b8dee"></div>60–79</div>
+    <div class="leg"><div class="ll" style="background:#f0a030"></div>40–59</div>
+    <div class="leg"><div class="ll" style="background:#e05555"></div>&lt; 40</div>
+  </div>
+
+  <div class="detail-strip" id="dstrip">
+    <div class="ds-char" id="dc" style="color:#2e3a55">—</div>
+    <div class="ds-meta">
+      <div class="ds-py" id="dpy" style="color:#2e3a55">sélectionnez une syllabe</div>
+      <div class="ds-tr" id="dtr"></div>
+    </div>
+    <div class="ds-bars" id="dbars"></div>
+    <div class="ds-hint" id="dhint" style="border-color:transparent;color:#f0a030"></div>
+  </div>
+
+  <div class="feedback">
+    <div class="fb-lbl">Retour pédagogique</div>
+    <div class="fb-body" id="fbody"></div>
+  </div>
+
+</div>
+
+<script>
+const SYL=[
+  {hanzi:'你',pinyin:'nǐ', trad:'tu',        ton:3,score:82,ton_s:78,init_s:91,fin_s:85,exp:[.42,.35,.22,.18,.22,.30],got:[.45,.38,.26,.22,.25,.32],err:null},
+  {hanzi:'好',pinyin:'hǎo',trad:'bonjour',   ton:3,score:61,ton_s:55,init_s:72,fin_s:68,exp:[.42,.34,.20,.16,.20,.28],got:[.44,.40,.37,.35,.36,.38],err:'ton_plat'},
+  {hanzi:'谢',pinyin:'xiè',trad:'remercier', ton:4,score:88,ton_s:92,init_s:82,fin_s:89,exp:[.72,.60,.46,.32,.22,.16],got:[.74,.61,.47,.33,.22,.17],err:null},
+  {hanzi:'谢',pinyin:'xiè',trad:'(redoubl.)',ton:4,score:74,ton_s:70,init_s:80,fin_s:76,exp:[.72,.60,.46,.32,.22,.16],got:[.70,.60,.50,.42,.36,.32],err:'ton_trop_lent'},
+  {hanzi:'你',pinyin:'nǐ', trad:'toi',       ton:3,score:45,ton_s:38,init_s:60,fin_s:52,exp:[.42,.35,.22,.18,.22,.30],got:[.40,.38,.36,.35,.35,.36],err:'ton_plat'},
+];
+const HINTS={ton_plat:'Descente initiale absente — le ton 3 doit plonger avant de remonter.',ton_trop_lent:'Le ton 4 doit chuter franchement et rapidement.',sandhi_manquant:'T3+T3 → le premier devient ton 2 en pratique.'};
+const MARKS=['¯','´','ˇ','`','·'];
+const SYL_PTS=6;
+
+function col(s){
+  if(s>=80)return{h:'#3ecf7a',bg:'rgba(62,207,122,.10)',bd:'rgba(62,207,122,.30)'};
+  if(s>=60)return{h:'#5b8dee',bg:'rgba(91,141,238,.10)',bd:'rgba(91,141,238,.28)'};
+  if(s>=40)return{h:'#f0a030',bg:'rgba(240,160,48,.10)',bd:'rgba(240,160,48,.28)'};
+  return      {h:'#e05555',bg:'rgba(224,85,85,.10)', bd:'rgba(224,85,85,.30)'};
+}
+
+const cv=document.getElementById('f0');
+const cx=cv.getContext('2d');
+let activeIdx=-1;
+const PAD_B=56;
+
+function draw(hi){
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.offsetWidth*dpr, H=220*dpr;
+  cv.width=W; cv.height=H;
+  const pL=42*dpr,pR=10*dpr,pT=18*dpr,pB=PAD_B*dpr;
+  const gw=W-pL-pR, gh=H-pT-pB;
+
+  cx.fillStyle='#0d1018'; cx.fillRect(0,0,W,H);
+
+  cx.strokeStyle='rgba(255,255,255,.03)';cx.lineWidth=1;
+  [.2,.4,.6,.8].forEach(v=>{const y=pT+gh-v*gh;cx.beginPath();cx.moveTo(pL,y);cx.lineTo(W-pR,y);cx.stroke()});
+  ['grave','médium','aigu'].forEach((l,i)=>{
+    cx.fillStyle='rgba(255,255,255,.10)';cx.font=`${7*dpr}px JetBrains Mono,monospace`;cx.textAlign='right';
+    cx.fillText(l,pL-4*dpr,pT+gh-(i+.5)/3*gh+3*dpr);
+  });
+
+  const allExp=SYL.flatMap(s=>s.exp);
+  const allGot=SYL.flatMap(s=>s.got);
+  const n=allExp.length;
+  const px=i=>pL+(i/(n-1))*gw;
+  const py=v=>pT+gh-v*gh;
+
+  SYL.forEach((s,si)=>{
+    const x1=pL+(si/SYL.length)*gw, x2=pL+((si+1)/SYL.length)*gw, mid=(x1+x2)/2;
+    const c=col(s.score);
+    if(si===hi){
+      cx.fillStyle=c.bg.replace(/[\d.]+\)$/,'0.22)');cx.fillRect(x1,pT,x2-x1,gh);
+      cx.fillStyle=c.h;cx.fillRect(x1,pT,x2-x1,2*dpr);
+    }
+    if(si>0){cx.strokeStyle='rgba(255,255,255,.06)';cx.lineWidth=.5*dpr;cx.setLineDash([3*dpr,3*dpr]);cx.beginPath();cx.moveTo(x1,pT);cx.lineTo(x1,pT+gh);cx.stroke();cx.setLineDash([])}
+
+    const isA=si===hi;
+    cx.fillStyle=isA?c.h:'rgba(255,255,255,.55)';
+    cx.font=`${(isA?17:15)*dpr}px Noto Serif SC,serif`;cx.textAlign='center';
+    cx.fillText(s.hanzi,mid,pT+gh+16*dpr);
+    cx.fillStyle=isA?c.h:'rgba(255,255,255,.22)';
+    cx.font=`${8*dpr}px JetBrains Mono,monospace`;
+    cx.fillText(s.pinyin+' '+MARKS[s.ton-1],mid,pT+gh+27*dpr);
+    const bw=26*dpr,bh=13*dpr,bx=mid-bw/2,by=pT+gh+33*dpr;
+    cx.fillStyle=isA?c.bd:'rgba(255,255,255,.05)';
+    cx.beginPath();cx.roundRect(bx,by,bw,bh,3*dpr);cx.fill();
+    cx.fillStyle=isA?c.h:'rgba(255,255,255,.3)';
+    cx.font=`500 ${8*dpr}px JetBrains Mono,monospace`;
+    cx.fillText(s.score,mid,by+9*dpr);
+  });
+
+  // expected
+  cx.strokeStyle='rgba(91,141,238,.4)';cx.lineWidth=1.5*dpr;cx.setLineDash([5*dpr,3*dpr]);
+  cx.beginPath();allExp.forEach((v,i)=>i===0?cx.moveTo(px(i),py(v)):cx.lineTo(px(i),py(v)));cx.stroke();cx.setLineDash([]);
+
+  // produced
+  for(let i=0;i<n-1;i++){
+    const s=Math.min(SYL[Math.min(Math.floor(i/SYL_PTS),SYL.length-1)].score,SYL[Math.min(Math.floor((i+1)/SYL_PTS),SYL.length-1)].score);
+    cx.strokeStyle=col(s).h;cx.lineWidth=2*dpr;
+    cx.beginPath();cx.moveTo(px(i),py(allGot[i]));cx.lineTo(px(i+1),py(allGot[i+1]));cx.stroke();
+  }
+
+  // dots
+  SYL.forEach((_,si)=>{if(si===0)return;const i=si*SYL_PTS;cx.fillStyle=col(SYL[si].score).h;cx.beginPath();cx.arc(px(i),py(allGot[i]),3*dpr,0,Math.PI*2);cx.fill()});
+}
+
+const strip=document.getElementById('hit-strip');
+SYL.forEach((_,i)=>{const h=document.createElement('div');h.className='hit';h.onclick=()=>showDetail(i);strip.appendChild(h)});
+
+function showDetail(i){
+  activeIdx=i;draw(i);
+  const s=SYL[i],c=col(s.score);
+  document.getElementById('dc').textContent=s.hanzi;
+  document.getElementById('dc').style.color=c.h;
+  document.getElementById('dpy').textContent=`${s.pinyin} — ton ${s.ton} ${MARKS[s.ton-1]}`;
+  document.getElementById('dpy').style.color=c.h;
+  document.getElementById('dtr').textContent=s.trad;
+  document.getElementById('dbars').innerHTML=
+    [{l:'global',v:s.score},{l:'ton',v:s.ton_s},{l:'initiale',v:s.init_s},{l:'finale',v:s.fin_s}]
+    .map(b=>{const bc=col(b.v);return`<div class="br"><span class="bl">${b.l}</span><div class="bt"><div class="bf" style="width:${b.v}%;background:${bc.h}"></div></div><span class="bv" style="color:${bc.h}">${b.v}</span></div>`}).join('');
+  const dh=document.getElementById('dhint');
+  dh.style.borderColor='#1a2035';
+  if(s.err&&HINTS[s.err]){dh.textContent=HINTS[s.err];dh.style.color='#f0a030';}
+  else{dh.textContent='Prononciation correcte.';dh.style.color='#3ecf7a';}
+}
+
+const FB=`‹FR›Score de 72 sur 100 — bonne base, quelques tons à affiner.‹/FR› ‹FR›Point fort :‹/FR› ‹ZH›谢‹PY›xiè‹/PY›‹/ZH› ‹FR›est très bien prononcé, la chute du ton 4 est nette et franche.‹/FR› ‹FR›À travailler : sur‹/FR› ‹ZH›好‹PY›hǎo‹/PY›‹/ZH› ‹FR›et le dernier‹/FR› ‹ZH›你‹PY›nǐ‹/PY›‹/ZH›‹FR›, le ton 3 reste trop plat — laissez la voix descendre dans un creux, puis remonter légèrement.‹/FR› ‹FR›Exercice : répétez lentement‹/FR› ‹ZH›你好‹PY›níhǎo‹/PY›‹/ZH› ‹FR›en exagérant la descente.‹/FR›`;
+
+function parseFb(raw){
+  const el=document.getElementById('fbody'),frag=document.createDocumentFragment();
+  const re=/‹(FR|ZH|PY)›([\s\S]*?)‹\/\1›/g;let m;
+  while((m=re.exec(raw))!==null){
+    if(m[1]==='FR'){const sp=document.createElement('span');sp.textContent=m[2];frag.appendChild(sp);frag.appendChild(document.createTextNode(' '));}
+    else if(m[1]==='ZH'){
+      const inner=m[2],pyM=/‹PY›([\s\S]*?)‹\/PY›/.exec(inner);
+      const hz=inner.replace(/‹PY›[\s\S]*?‹\/PY›/,'').trim(),py=pyM?pyM[1]:'';
+      const sp=document.createElement('span');sp.className='zh';sp.textContent=hz;
+      sp.onclick=()=>{sp.classList.add('playing');setTimeout(()=>sp.classList.remove('playing'),700)};
+      frag.appendChild(sp);
+      if(py){const pa=document.createElement('span');pa.className='py-ann';pa.textContent=py;frag.appendChild(pa);}
+      frag.appendChild(document.createTextNode(' '));
+    }
+  }
+  el.appendChild(frag);
+}
+
+requestAnimationFrame(()=>{draw(-1);parseFb(FB)});
+window.addEventListener('resize',()=>draw(activeIdx));
+</script>

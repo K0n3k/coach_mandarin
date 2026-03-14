@@ -1,0 +1,33 @@
+cat > .gitignore << 'EOF'
+# Dataset — lien symbolique vers disque externe, jamais versionné
+dataset/
+
+# Checkpoints ML
+**/*.pt
+**/*.ckpt
+/checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+.svelte-kit/
+build/
+
+# Env — jamais versionné
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+EOF

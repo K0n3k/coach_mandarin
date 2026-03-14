@@ -1,0 +1,497 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06080d;font-family:'IBM Plex Sans',sans-serif;padding:16px;color:#b8bfcc}
+.card{background:#0d1018;border:1px solid #1a2035;border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.5)}
+.mono{font-family:'JetBrains Mono',monospace}
+.sep{border:none;border-top:1px solid #1a2035}
+.sec-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#2e3a55;font-family:'JetBrains Mono',monospace}
+
+/* ── Header ── */
+.card-head{padding:13px 18px;border-bottom:1px solid #1a2035}
+.head-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.model-name{font-size:15px;color:#fff;font-weight:500}
+.model-sub{font-size:9px;color:#2e3a55;font-family:'JetBrains Mono',monospace;margin-top:2px}
+.status{display:flex;align-items:center;gap:6px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#3ecf7a}
+.dot{width:7px;height:7px;border-radius:50%;background:#3ecf7a;box-shadow:0 0 6px #3ecf7a;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Progress bars in header */
+.head-progs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.prog-block{}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.prog-name{font-size:9px;color:#8892a4}
+.prog-pct{font-size:9px;font-family:'JetBrains Mono',monospace}
+.track{height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;margin-bottom:3px}
+.fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-eta{font-size:8px;color:#2e3a55;font-family:'JetBrains Mono',monospace}
+
+/* ── KPI strip ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid #1a2035}
+.kpi{padding:10px 12px;border-right:1px solid #1a2035;text-align:center}
+.kpi:last-child{border-right:none}
+.kl{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#2e3a55;font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.kv{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:500;line-height:1}
+.ks{font-size:8px;color:#2e3a55;margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+/* ── Middle 3-col ── */
+.mid-row{display:grid;grid-template-columns:200px 1fr 200px;border-bottom:1px solid #1a2035}
+.mid-col{padding:12px 14px}
+.mid-col:not(:last-child){border-right:1px solid #1a2035}
+.mid-col .sec-lbl{display:block;margin-bottom:8px}
+
+/* Config rows */
+.cf-row{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.cf-row:last-child{border-bottom:none}
+.cf-k{font-size:9px;color:#3d4a60;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.cf-v{font-size:9px;color:#8892a4;font-family:'JetBrains Mono',monospace;text-align:right}
+.cf-v.hi{color:#5b8dee}
+.cf-v.ok{color:#3ecf7a}
+.cf-v.warn{color:#f0a030}
+.cf-v.err{color:#e05555}
+.ds-tags{display:flex;flex-wrap:wrap;gap:2px;margin-top:5px}
+.ds-tag{font-size:8px;border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono',monospace;display:inline-block}
+.ds-tag.active{background:rgba(62,207,122,.12);border:1px solid rgba(62,207,122,.3);color:#3ecf7a}
+.ds-tag.idle{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#2e3a55}
+
+/* Logs */
+.log-lines{display:flex;flex-direction:column;gap:2px}
+.log-line{display:grid;grid-template-columns:28px 160px 72px 36px;gap:4px;font-size:8.5px;font-family:'JetBrains Mono',monospace;color:#2e3a55;white-space:nowrap}
+.log-line.latest{color:#8892a4}
+.log-line.latest .lv{color:#5b8dee}
+.log-ep{color:#3d4a60}
+.log-batch-lbl{color:#2e3a55;font-size:7.5px}
+
+/* GPU col */
+.gpu-rows{display:flex;flex-direction:column;gap:8px}
+.gpu-mini{display:flex;flex-direction:column;gap:3px}
+.gpu-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.gpu-lbl{font-size:8px;color:#3d4a60;font-family:'JetBrains Mono',monospace}
+.gpu-val{font-size:9px;font-family:'JetBrains Mono',monospace}
+
+/* Charts */
+.loss-section{padding:12px 18px;border-bottom:1px solid #1a2035}
+.charts-bot{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #1a2035}
+.chart-block{padding:12px 18px}
+.chart-block:first-child{border-right:1px solid #1a2035}
+.chart-lbl{margin-bottom:8px;display:flex;align-items:center;gap:8px}
+canvas{display:block;width:100%}
+
+/* GPU charts */
+.gpu-charts{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #1a2035}
+.gpu-chart-block{padding:12px 14px}
+.gpu-chart-block:not(:last-child){border-right:1px solid #1a2035}
+
+/* Tone */
+.tone-section{padding:12px 18px;border-bottom:1px solid #1a2035}
+.tone-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.tone-card{background:#0a0c12;border:1px solid #1a2035;border-radius:8px;padding:8px 6px;text-align:center}
+.tone-tag{font-size:8px;font-family:'JetBrains Mono',monospace;margin-bottom:1px}
+.tone-name{font-size:7px;color:#2e3a55;margin-bottom:5px}
+.tone-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500}
+.tone-bt{height:3px;background:rgba(255,255,255,.05);border-radius:2px;margin-top:5px;overflow:hidden}
+.tone-bf{height:100%;border-radius:2px}
+
+.dot-legend{display:flex;gap:1px;align-items:center;font-size:8px;font-family:'JetBrains Mono',monospace}
+.dot-legend span{color:inherit}
+</style>
+
+<div class="card">
+
+  <!-- ── Header ── -->
+  <div class="card-head">
+    <div class="head-top">
+      <div>
+        <div class="model-name">mel-cnn-bigru</div>
+        <div class="model-sub">Phase 2 · cuda:0 · AMP ON · batch 64 · LR 5e-4</div>
+      </div>
+      <div class="status"><div class="dot"></div>En cours</div>
+    </div>
+    <div class="head-progs">
+      <div class="prog-block">
+        <div class="prog-top">
+          <span class="prog-name">Epoch <span id="pg-epnum">2</span> — batch <span id="pg-stepstxt" class="mono" style="font-size:9px">20 100 / 34 423</span></span>
+          <span class="prog-pct" style="color:#5b8dee" id="pg-eppct">58.4%</span>
+        </div>
+        <div class="track"><div class="fill" id="fill-ep" style="width:58.4%;background:linear-gradient(90deg,#1e3a6e,#5b8dee)"></div></div>
+        <div style="display:flex;justify-content:space-between">
+          <span class="prog-eta" id="eta-ep">ETA epoch · 25 min</span>
+          <span class="prog-eta">~60 min / epoch</span>
+        </div>
+      </div>
+      <div class="prog-block">
+        <div class="prog-top">
+          <span class="prog-name">Global — <span class="mono" style="font-size:9px">20 / 688 460 batches</span></span>
+          <span class="prog-pct" style="color:#3ecf7a" id="pg-glpct">7.9%</span>
+        </div>
+        <div class="track"><div class="fill" id="fill-gl" style="width:7.9%;background:linear-gradient(90deg,#0d4a2e,#3ecf7a)"></div></div>
+        <span class="prog-eta" id="eta-gl">ETA global · 19 h 21 min</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KPI strip ── -->
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kl">Best acc.</div>
+      <div class="kv" style="color:#3ecf7a">35.4%</div>
+      <div class="ks">Epoch 1</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Best loss</div>
+      <div class="kv" style="color:#f0a030">1.511</div>
+      <div class="ks">Val · ep1</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Epoch</div>
+      <div class="kv" style="color:#fff"><span id="kv-ep">2</span><span style="font-size:10px;color:#2e3a55"> / 20</span></div>
+      <div class="ks" id="ks-epeta">~60 min/ep</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Loss batch</div>
+      <div class="kv" style="color:#f0a030" id="kv-loss">1.6705</div>
+      <div class="ks">MA5 <span id="kv-ma">1.601</span></div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Vitesse</div>
+      <div class="kv" style="color:#5b8dee">9.5</div>
+      <div class="ks">batch/s</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Échantillons</div>
+      <div class="kv" style="color:#fff;font-size:13px">2.32M</div>
+      <div class="ks">118k val</div>
+    </div>
+  </div>
+
+  <!-- ── Middle 3 cols ── -->
+  <div class="mid-row">
+
+    <!-- Config -->
+    <div class="mid-col">
+      <span class="sec-lbl">Configuration</span>
+      <div class="cf-row"><span class="cf-k">Modèle</span><span class="cf-v hi">mel-cnn-bigru</span></div>
+      <div class="cf-row"><span class="cf-k">Locuteurs</span><span class="cf-v">460</span></div>
+      <div class="cf-row"><span class="cf-k">Warmup</span><span class="cf-v">3% · 20 653 steps</span></div>
+      <div class="cf-row"><span class="cf-k">Grad norm</span><span class="cf-v" id="cf-grad">0.847</span></div>
+      <div class="cf-row"><span class="cf-k">LR actuel</span><span class="cf-v hi" id="cf-lr">4.80e-4</span></div>
+      <div class="cf-row"><span class="cf-k">Overfit</span><span class="cf-v ok" id="cf-overfit">ok</span></div>
+      <div class="cf-row"><span class="cf-k">Démarré</span><span class="cf-v warn" id="cf-started">il y a 5 min</span></div>
+      <div class="cf-row"><span class="cf-k">Maj.</span><span class="cf-v" id="cf-update">il y a 3 s</span></div>
+      <div style="margin-top:6px"><span class="sec-lbl">Datasets</span>
+        <div class="ds-tags">
+          <span class="ds-tag active">AISHELL-1</span>
+          <span class="ds-tag active">THCHS-30</span>
+          <span class="ds-tag active">CV zh-CN</span>
+          <span class="ds-tag active">TTS-ph1</span>
+          <span class="ds-tag idle">speechocean</span>
+          <span class="ds-tag idle">BLCU</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="mid-col">
+      <span class="sec-lbl">Log &nbsp;<span style="color:#3d4a60;font-size:8px">B = batch</span></span>
+      <div class="log-lines" id="log-lines"></div>
+    </div>
+
+    <!-- GPU -->
+    <div class="mid-col">
+      <span class="sec-lbl">GPU · RTX 3070 Ti</span>
+      <div class="gpu-rows">
+        <div class="gpu-mini">
+          <div class="gpu-row">
+            <span class="gpu-lbl">Utilisation</span>
+            <span class="gpu-val" style="color:#5b8dee" id="gv-use">94%</span>
+          </div>
+          <div class="track"><div class="fill" id="gf-use" style="width:94%;background:linear-gradient(90deg,#1e3a6e,#5b8dee)"></div></div>
+        </div>
+        <div class="gpu-mini">
+          <div class="gpu-row">
+            <span class="gpu-lbl">VRAM</span>
+            <span class="gpu-val" style="color:#9b6dff" id="gv-vram">6.8 / 8 GB</span>
+          </div>
+          <div class="track"><div class="fill" id="gf-vram" style="width:85%;background:linear-gradient(90deg,#3a1e6e,#9b6dff)"></div></div>
+        </div>
+        <div class="gpu-mini">
+          <div class="gpu-row">
+            <span class="gpu-lbl">Température</span>
+            <span class="gpu-val" style="color:#f0a030" id="gv-temp">71 °C</span>
+          </div>
+          <div class="track"><div class="fill" id="gf-temp" style="width:71%;background:linear-gradient(90deg,#3a2a0a,#f0a030)"></div></div>
+        </div>
+        <div class="gpu-mini">
+          <div class="gpu-row">
+            <span class="gpu-lbl">Puissance</span>
+            <span class="gpu-val" style="color:#e05555" id="gv-pow">183 / 290 W</span>
+          </div>
+          <div class="track"><div class="fill" id="gf-pow" style="width:63%;background:linear-gradient(90deg,#3a0e0e,#e05555)"></div></div>
+        </div>
+        <div class="gpu-mini">
+          <div class="gpu-row">
+            <span class="gpu-lbl">RAM système</span>
+            <span class="gpu-val" style="color:#3ecf7a" id="gv-ram">18.4 / 32 GB</span>
+          </div>
+          <div class="track"><div class="fill" id="gf-ram" style="width:57%;background:linear-gradient(90deg,#0d3a20,#3ecf7a)"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── GPU charts ── -->
+  <div class="gpu-charts">
+    <div class="gpu-chart-block">
+      <div class="chart-lbl"><span class="sec-lbl">GPU util. %</span></div>
+      <canvas id="c-gpu-use" height="60"></canvas>
+    </div>
+    <div class="gpu-chart-block">
+      <div class="chart-lbl"><span class="sec-lbl">Température °C</span></div>
+      <canvas id="c-gpu-temp" height="60"></canvas>
+    </div>
+    <div class="gpu-chart-block">
+      <div class="chart-lbl"><span class="sec-lbl">VRAM GB</span></div>
+      <canvas id="c-gpu-vram" height="60"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Loss temps réel ── -->
+  <div class="loss-section">
+    <div class="chart-lbl">
+      <span class="sec-lbl">Loss temps réel</span>
+      <span class="dot-legend" style="color:#e05555">● <span>Loss</span></span>
+      <span class="dot-legend" style="color:#f0a030">● <span>MA(5)</span></span>
+    </div>
+    <canvas id="c-loss" height="90"></canvas>
+  </div>
+
+  <!-- ── Epoch charts ── -->
+  <div class="charts-bot">
+    <div class="chart-block">
+      <div class="chart-lbl">
+        <span class="sec-lbl">Loss / epoch</span>
+        <span class="dot-legend" style="color:#e05555">● Train</span>
+        <span class="dot-legend" style="color:#f0a030">● Val</span>
+      </div>
+      <canvas id="c-lossep" height="90"></canvas>
+    </div>
+    <div class="chart-block">
+      <div class="chart-lbl">
+        <span class="sec-lbl">Accuracy / epoch</span>
+        <span class="dot-legend" style="color:#5b8dee">● Train</span>
+        <span class="dot-legend" style="color:#3ecf7a">● Val</span>
+      </div>
+      <canvas id="c-acc" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Tone section ── -->
+  <div class="tone-section">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="sec-lbl">Accuracy par ton / epoch</span>
+      <div style="display:flex;gap:8px" id="tone-legend"></div>
+    </div>
+    <canvas id="c-tone" height="90" style="margin-top:8px"></canvas>
+    <div class="tone-grid" id="tone-grid" style="margin-top:10px"></div>
+  </div>
+
+</div>
+
+<script>
+const TONES=[
+  {tag:'T1',name:'Haut plat',  val:23.5,color:'#e05555'},
+  {tag:'T2',name:'Montant',    val:17.8,color:'#f0a030'},
+  {tag:'T3',name:'Desc-mont',  val:0.0, color:'#3ecf7a'},
+  {tag:'T4',name:'Descendant', val:74.9,color:'#5b8dee'},
+  {tag:'T5',name:'Neutre',     val:0.0, color:'#9b6dff'},
+];
+
+// Tone legend + cards
+const tl=document.getElementById('tone-legend');
+TONES.forEach(t=>{
+  tl.innerHTML+=`<span style="font-size:8px;color:${t.color};font-family:'JetBrains Mono',monospace">● ${t.tag}</span>`;
+});
+const tg=document.getElementById('tone-grid');
+TONES.forEach(t=>{
+  tg.innerHTML+=`<div class="tone-card">
+    <div class="tone-tag" style="color:${t.color}">${t.tag}</div>
+    <div class="tone-name">${t.name}</div>
+    <div class="tone-val" style="color:${t.color}" id="tv-${t.tag}">${t.val.toFixed(1)}%</div>
+    <div class="tone-bt"><div class="tone-bf" id="tb-${t.tag}" style="width:${t.val}%;background:${t.color}"></div></div>
+  </div>`;
+});
+
+// Chart draw utility
+function drawChart(id,datasets,opts={}){
+  const cv=document.getElementById(id);if(!cv)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.offsetWidth*dpr, H=cv.height*dpr;
+  cv.width=W;cv.height=H;
+  const cx=cv.getContext('2d');
+  const pL=(opts.pL||28)*dpr,pR=6*dpr,pT=8*dpr,pB=(opts.pB||16)*dpr;
+  const gw=W-pL-pR,gh=H-pT-pB;
+  cx.fillStyle='#0d1018';cx.fillRect(0,0,W,H);
+  const allV=datasets.flatMap(d=>d.data).filter(isFinite);
+  if(!allV.length)return;
+  const mn=opts.min??Math.min(...allV)*.97;
+  const mx=opts.max??Math.max(...allV)*1.03;
+  const norm=v=>(v-mn)/(mx-mn||1);
+  cx.strokeStyle='rgba(255,255,255,.04)';cx.lineWidth=1;
+  [.25,.5,.75,1].forEach(v=>{
+    const y=pT+gh-v*gh;
+    cx.beginPath();cx.moveTo(pL,y);cx.lineTo(W-pR,y);cx.stroke();
+    cx.fillStyle='rgba(255,255,255,.14)';cx.font=`${7*dpr}px JetBrains Mono,monospace`;cx.textAlign='right';
+    const lv=mn+(mx-mn)*v;
+    cx.fillText(lv>10?lv.toFixed(0):lv.toFixed(2),pL-3*dpr,y+3*dpr);
+  });
+  if(opts.xLabels){
+    opts.xLabels.forEach((l,i)=>{
+      const x=pL+(i/(opts.xLabels.length-1||1))*gw;
+      cx.fillStyle='rgba(255,255,255,.12)';cx.font=`${7*dpr}px JetBrains Mono,monospace`;cx.textAlign='center';
+      cx.fillText(l,x,H-3*dpr);
+    });
+  }
+  datasets.forEach(ds=>{
+    const n=ds.data.length;if(n<1)return;
+    cx.strokeStyle=ds.color;cx.lineWidth=(ds.lw||1.5)*dpr;
+    if(ds.dash)cx.setLineDash([4*dpr,3*dpr]);else cx.setLineDash([]);
+    cx.beginPath();
+    ds.data.forEach((v,i)=>{
+      const x=pL+(n===1?gw/2:i/(n-1)*gw);
+      const y=pT+gh-norm(v)*gh;
+      i===0?cx.moveTo(x,y):cx.lineTo(x,y);
+    });
+    cx.stroke();cx.setLineDash([]);
+    if(ds.dots){
+      ds.data.forEach((v,i)=>{
+        const x=pL+(n===1?gw/2:i/(n-1)*gw);
+        const y=pT+gh-norm(v)*gh;
+        cx.fillStyle=ds.color;cx.beginPath();cx.arc(x,y,3*dpr,0,Math.PI*2);cx.fill();
+      });
+    }
+  });
+}
+
+// Data
+function genSeries(n,s,noise){return Array.from({length:n},(_,i)=>s*Math.exp(-i/n*.22)+noise*(Math.random()-.5)*.1)}
+function ma(a,k){return a.map((_,i)=>{const sl=a.slice(Math.max(0,i-k+1),i+1);return sl.reduce((a,b)=>a+b)/sl.length})}
+
+let lossRaw=genSeries(140,1.68,.14);
+let lossMa=ma(lossRaw,5);
+const lossEpTr=[1.615,1.510];const lossEpVa=[1.602,1.511];
+const accEpTr=[33.1,38.2];const accEpVa=[31.8,35.4];
+const toneEpData=TONES.map(t=>[Math.max(0,t.val-Math.random()*8),t.val]);
+
+// GPU history arrays
+let gpuUse=Array(60).fill(92+Math.random()*4);
+let gpuTemp=Array(60).fill(70+Math.random()*3);
+let gpuVram=Array(60).fill(6.7+Math.random()*.2);
+
+let epPct=58.4,glPct=7.9,etaEpS=1500,etaGlS=19*3600+21*60;
+let startedS=300,lastUpdateS=3,gradNorm=0.847,lrCur=4.8e-4;
+
+// Logs
+const INITLOGS=[
+  ['E2','19300','34423','1.5717','~26m'],
+  ['E2','19400','34423','1.5766','~26m'],
+  ['E2','19500','34423','1.5786','~26m'],
+  ['E2','19600','34423','1.6335','~26m'],
+  ['E2','19700','34423','1.5614','~26m'],
+  ['E2','19800','34423','1.6474','~26m'],
+  ['E2','19900','34423','1.5483','~25m'],
+  ['E2','20000','34423','1.6130','~25m'],
+  ['E2','20100','34423','1.6705','~25m'],
+];
+let logData=[...INITLOGS];
+
+function renderLogs(){
+  const ll=document.getElementById('log-lines');
+  ll.innerHTML=logData.slice(-11).map((l,i,a)=>{
+    const isLast=i===a.length-1;
+    return`<div class="log-line${isLast?' latest':''}">
+      <span class="log-ep">[${l[0]}]</span>
+      <span class="${isLast?'lv':''}"><span class="log-batch-lbl">B </span>${l[1]}<span class="log-batch-lbl"> / ${l[2]}</span></span>
+      <span>loss=${l[3]}</span>
+      <span>${l[4]}</span>
+    </div>`;
+  }).join('');
+}
+renderLogs();
+
+function fmtTime(s){if(s<60)return`${Math.round(s)} s`;if(s<3600)return`${Math.round(s/60)} min`;const h=Math.floor(s/3600),m=Math.round((s%3600)/60);return`${h} h ${m} min`}
+function fmtAgo(s){if(s<60)return`il y a ${Math.round(s)} s`;return`il y a ${Math.round(s/60)} min`}
+
+function renderAll(){
+  drawChart('c-loss',[{data:lossRaw,color:'rgba(224,85,85,.45)',lw:1},{data:lossMa,color:'#f0a030',lw:2}]);
+  drawChart('c-lossep',[{data:lossEpTr,color:'#e05555',lw:2,dots:true},{data:lossEpVa,color:'#f0a030',lw:2,dots:true}],{xLabels:lossEpTr.map((_,i)=>`E${i+1}`)});
+  drawChart('c-acc',[{data:accEpTr,color:'#5b8dee',lw:2,dots:true},{data:accEpVa,color:'#3ecf7a',lw:2,dots:true}],{min:0,max:100,xLabels:accEpTr.map((_,i)=>`E${i+1}`)});
+  drawChart('c-tone',TONES.map((t,ti)=>({data:toneEpData[ti],color:t.color,lw:1.5,dots:true})),{min:0,max:100,xLabels:toneEpData[0].map((_,i)=>`E${i+1}`)});
+  drawChart('c-gpu-use',[{data:gpuUse,color:'#5b8dee',lw:1.5}],{min:0,max:100,pB:8,pL:24});
+  drawChart('c-gpu-temp',[{data:gpuTemp,color:'#f0a030',lw:1.5}],{min:50,max:90,pB:8,pL:24});
+  drawChart('c-gpu-vram',[{data:gpuVram,color:'#9b6dff',lw:1.5}],{min:0,max:8,pB:8,pL:24});
+}
+
+let tick=0;
+setInterval(()=>{
+  tick++;
+  epPct=Math.min(100,epPct+.08+Math.random()*.04);
+  glPct=Math.min(100,glPct+.004);
+  etaEpS=Math.max(0,etaEpS-1);etaGlS=Math.max(0,etaGlS-1);
+  startedS++;lastUpdateS=tick%4===0?0:lastUpdateS+1;
+  gradNorm=+(.6+Math.random()*.5).toFixed(3);
+  lrCur=+(4.8e-4*(1-glPct/200)).toFixed(2)+'e-4';
+
+  const newLoss=+(1.57+Math.random()*.10).toFixed(4);
+  lossRaw.push(newLoss);lossRaw.shift();
+  lossMa=ma(lossRaw,5);
+
+  // GPU sim
+  const u=Math.min(100,Math.max(85,92+Math.sin(tick*.3)*4+(Math.random()-.5)*3));
+  const t=Math.min(85,Math.max(68,71+Math.sin(tick*.15)*2+(Math.random()-.5)*1.5));
+  const v=Math.min(8,Math.max(6.5,6.8+(Math.random()-.5)*.15));
+  gpuUse.push(u);gpuUse.shift();
+  gpuTemp.push(t);gpuTemp.shift();
+  gpuVram.push(v);gpuVram.shift();
+
+  const pow=Math.round(170+u*1.2);
+
+  // DOM updates
+  document.getElementById('fill-ep').style.width=epPct+'%';
+  document.getElementById('fill-gl').style.width=glPct+'%';
+  document.getElementById('pg-eppct').textContent=epPct.toFixed(1)+'%';
+  document.getElementById('pg-glpct').textContent=glPct.toFixed(1)+'%';
+  document.getElementById('eta-ep').textContent='ETA epoch · '+fmtTime(etaEpS);
+  document.getElementById('eta-gl').textContent='ETA global · '+fmtTime(etaGlS);
+  document.getElementById('cf-started').textContent=fmtAgo(startedS);
+  document.getElementById('cf-update').textContent=fmtAgo(lastUpdateS);
+  document.getElementById('cf-grad').textContent=gradNorm;
+  document.getElementById('cf-lr').textContent=lrCur;
+  const ovf=Math.abs(lossEpTr[lossEpTr.length-1]-lossEpVa[lossEpVa.length-1]);
+  const ovEl=document.getElementById('cf-overfit');
+  ovEl.textContent=ovf<.05?'ok':ovf<.15?'léger':'attention';
+  ovEl.className='cf-v '+(ovf<.05?'ok':ovf<.15?'warn':'err');
+  document.getElementById('kv-loss').textContent=newLoss;
+  document.getElementById('kv-ma').textContent=lossMa[lossMa.length-1].toFixed(3);
+  document.getElementById('gv-use').textContent=Math.round(u)+'%';
+  document.getElementById('gf-use').style.width=u+'%';
+  document.getElementById('gv-temp').textContent=Math.round(t)+' °C';
+  document.getElementById('gf-temp').style.width=(t/90*100)+'%';
+  document.getElementById('gv-vram').textContent=v.toFixed(1)+' / 8 GB';
+  document.getElementById('gf-vram').style.width=(v/8*100)+'%';
+  document.getElementById('gv-pow').textContent=pow+' / 290 W';
+  document.getElementById('gf-pow').style.width=(pow/290*100)+'%';
+
+  if(tick%3===0){
+    const step=20100+tick*3;
+    logData.push([`E2`,`${step}`,`34423`,newLoss.toFixed(4),`~${Math.round(etaEpS/60)}m`]);
+    if(logData.length>20)logData.shift();
+    renderLogs();
+  }
+  renderAll();
+},800);
+
+requestAnimationFrame(renderAll);
+window.addEventListener('resize',renderAll);
+</script>

@@ -1,0 +1,164 @@
+
+<style>
+#erd1 svg { width: 100%; }
+#erd1 svg.erDiagram .divider path { stroke-opacity: 0.4; }
+#erd1 svg.erDiagram .row-rect-odd path,
+#erd1 svg.erDiagram .row-rect-odd rect,
+#erd1 svg.erDiagram .row-rect-even path,
+#erd1 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd1"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '12px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#1a2035' : '#e8eaf6',
+    primaryBorderColor: dark ? '#2e3a55' : '#9fa8da',
+  },
+});
+const diagram = `erDiagram
+    users {
+        uuid id PK
+        varchar username
+        varchar email
+        varchar password_hash
+        jsonb settings
+        timestamp created_at
+    }
+    user_levels {
+        uuid id PK
+        uuid user_id FK
+        int tons
+        int phonemes
+        int grammaire
+        int vocabulaire
+        int fluidite
+        varchar global_level
+        timestamp updated_at
+    }
+    sessions {
+        uuid id PK
+        uuid user_id FK
+        varchar mode
+        text enonce
+        text traduction
+        varchar audio_path
+        bool consent
+        timestamp created_at
+    }
+    session_scores {
+        uuid id PK
+        uuid session_id FK
+        int score_global
+        int score_fluidite
+        int score_rythme
+        int debit_mots_min
+        text whisper_transcript
+        float f0_mean_hz
+    }
+    syllable_scores {
+        uuid id PK
+        uuid session_id FK
+        varchar hanzi
+        varchar pinyin
+        int position
+        int start_ms
+        int end_ms
+        int score_global
+        int score_ton
+        int score_initiale
+        int score_finale
+        int ton_attendu
+        int ton_detecte
+        varchar erreur
+    }
+    phoneme_scores {
+        uuid id PK
+        uuid syllable_id FK
+        varchar attendu
+        varchar detecte
+        int score
+        varchar type_confusion
+        int start_ms
+        int end_ms
+    }
+    feedback {
+        uuid id PK
+        uuid session_id FK
+        text ollama_raw
+        text parsed_fr
+        int rating
+        timestamp created_at
+    }
+    exercises {
+        uuid id PK
+        varchar level
+        varchar module
+        varchar type
+        jsonb content
+        timestamp created_at
+    }
+    exercise_attempts {
+        uuid id PK
+        uuid user_id FK
+        uuid exercise_id FK
+        uuid session_id FK
+        int score
+        timestamp created_at
+    }
+    dataset_entries {
+        uuid id PK
+        uuid session_id FK
+        varchar audio_path
+        text transcript
+        jsonb scores
+        bool quality_ok
+        bool consent
+        varchar split
+        timestamp created_at
+    }
+
+    users ||--o{ sessions : "fait"
+    users ||--|| user_levels : "a"
+    users ||--o{ exercise_attempts : "tente"
+    sessions ||--|| session_scores : "a"
+    sessions ||--o{ syllable_scores : "contient"
+    sessions ||--o| feedback : "recoit"
+    sessions ||--o| dataset_entries : "collecte"
+    sessions ||--o{ exercise_attempts : "issue de"
+    syllable_scores ||--o{ phoneme_scores : "contient"
+    exercises ||--o{ exercise_attempts : "sujet de"
+`;
+const { svg } = await mermaid.render('erd1-svg', diagram);
+document.getElementById('erd1').innerHTML = svg;
+document.querySelectorAll('#erd1 svg.erDiagram .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+document.querySelectorAll('#erd1 svg.erDiagram .row-rect-odd path, #erd1 svg.erDiagram .row-rect-even path').forEach(p => p.setAttribute('stroke', 'none'));
+</script>
