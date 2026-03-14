@@ -103,7 +103,7 @@ export interface CheckpointEvent {
   is_best: boolean
 }
 
-export type TrainingEvent = StepEvent | EpochEndEvent | CheckpointEvent
+export type TrainingEvent = StepEvent | EpochEndEvent | CheckpointEvent | ConfigEvent
 
 export interface LogEntry {
   epoch: number
@@ -111,6 +111,13 @@ export interface LogEntry {
   steps_per_epoch: number
   loss: string
   eta: string
+}
+
+export interface DatasetInfo {
+  name: string
+  active: boolean
+  phases: number[]
+  samples?: number
 }
 
 export interface TrainingConfig {
@@ -122,14 +129,20 @@ export interface TrainingConfig {
   lr: number
   total_epochs: number
   warmup_steps: number
-  datasets: { name: string; active: boolean; phases: number[] }[]
+  datasets: DatasetInfo[]
   speakers: number
-  total_samples: string
-  val_samples: string
+  total_samples: number
+  val_samples: number
+}
+
+export interface ConfigEvent {
+  type: 'config'
+  run_id: string
+  config: TrainingConfig
 }
 
 export interface TrainingStore {
-  status: 'idle' | 'running' | 'done' | 'failed' | 'stopped'
+  status: 'idle' | 'connecting' | 'running' | 'done' | 'failed' | 'stopped'
   run_id: string | null
   config: TrainingConfig
 

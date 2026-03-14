@@ -26,6 +26,7 @@
   let s: TrainingStore
 
   // Derived values computed in the subscription callback, not via $:
+  let hasConfig = false
   let epochPct = 0
   let totalSteps = 0
   let globalStepsDone = 0
@@ -41,6 +42,8 @@
   let gpuPowerPct = 0
   let gpuTempColor = '#3ecf7a'
   let logCount = 0
+  let samplesSummary = ''
+  let samplesDetail = ''
 
   function fmtTime(sec: number): string {
     if (sec < 60) return `${Math.round(sec)} s`
@@ -60,7 +63,14 @@
     return v.toExponential(2)
   }
 
+  function fmtCount(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+    return String(n)
+  }
+
   function recompute() {
+    hasConfig = s.config.model_name !== ''
     epochPct = s.steps_per_epoch > 0 ? (s.step / s.steps_per_epoch) * 100 : 0
     totalSteps = s.config.total_epochs * s.steps_per_epoch
     globalStepsDone = (s.epoch - 1) * s.steps_per_epoch + s.step
@@ -85,6 +95,19 @@
     gpuTempPct = Math.min(100, Math.max(0, ((s.gpu.temp_c - 30) / 70) * 100))
     gpuPowerPct = Math.min(100, (s.gpu.power_w / 290) * 100)
     gpuTempColor = s.gpu.temp_c < 70 ? '#3ecf7a' : s.gpu.temp_c < 80 ? '#f0a030' : '#e05555'
+
+    // Samples summary
+    if (hasConfig) {
+      samplesSummary = fmtCount(s.config.total_samples)
+      samplesDetail = `${fmtCount(s.config.val_samples)} val`
+      const activeDs = s.config.datasets.filter(d => d.active && d.samples)
+      if (activeDs.length > 0) {
+        samplesDetail = activeDs.map(d => `${d.name} ${fmtCount(d.samples!)}`).join(' · ')
+      }
+    } else {
+      samplesSummary = '—'
+      samplesDetail = ''
+    }
 
     // Auto-scroll logs if new entries — use setTimeout to ensure DOM has updated
     if (s.logs.length !== logCount) {
@@ -262,8 +285,13 @@
   <!-- Header -->
   <div class="card-head">
     <div>
-      <div class="model-name">{s.config.model_name}</div>
-      <div class="model-sub">Phase {s.config.phase} · {s.config.device} · AMP {s.config.amp ? 'ON' : 'OFF'} · batch {s.config.batch_size} · LR {fmtLr(s.config.lr)}</div>
+      {#if hasConfig}
+        <div class="model-name">{s.config.model_name}</div>
+        <div class="model-sub">Phase {s.config.phase} · {s.config.device} · AMP {s.config.amp ? 'ON' : 'OFF'} · batch {s.config.batch_size} · LR {fmtLr(s.config.lr)}</div>
+      {:else}
+        <div class="model-name wait">En attente du trainer…</div>
+        <div class="model-sub">Aucune session active</div>
+      {/if}
     </div>
     {#if s.status === 'running'}
       <div class="status"><div class="dot"></div>En cours</div>
@@ -305,8 +333,8 @@
     </div>
     <div class="kpi">
       <div class="kl">Échantillons</div>
-      <div class="kv" style="color:#fff">{s.config.total_samples}</div>
-      <div class="ks">{s.config.val_samples} val</div>
+      <div class="kv" style="color:#fff">{samplesSummary}</div>
+      <div class="ks">{samplesDetail}</div>
     </div>
   </div>
 
@@ -315,23 +343,32 @@
     <!-- Config -->
     <div class="mid-col">
       <span class="sec-lbl">Configuration</span>
-      <div class="cf-row"><span class="cf-k">Modèle</span><span class="cf-v hi">{s.config.model_name}</span></div>
-      <div class="cf-row"><span class="cf-k">Locuteurs</span><span class="cf-v">{s.config.speakers}</span></div>
-      <div class="cf-row"><span class="cf-k">Warmup</span><span class="cf-v">3% · {s.config.warmup_steps.toLocaleString('fr')} steps</span></div>
-      <div class="cf-row"><span class="cf-k">Grad norm</span><span class="cf-v">{s.grad_norm.toFixed(3)}</span></div>
-      <div class="cf-row"><span class="cf-k">LR actuel</span><span class="cf-v hi">{fmtLr(s.lr)}</span></div>
-      <div class="cf-row"><span class="cf-k">Overfit</span><span class="cf-v {overfitClass}">{overfitLabel}</span></div>
-      <div class="cf-row"><span class="cf-k">Démarré</span><span class="cf-v warn">{startedAgo}</span></div>
-      <div class="cf-row"><span class="cf-k">Maj.</span><span class="cf-v">{updatedAgo}</span></div>
-      <div style="margin-top:6px">
-        <span class="sec-lbl">Datasets · Phase {s.config.phase}</span>
-        <div class="ds-tags">
-          {#each s.config.datasets as ds}
-            {@const inPhase = ds.phases.includes(s.config.phase)}
-            <span class="ds-tag" class:active={inPhase} class:idle={!inPhase}>{ds.name}</span>
-          {/each}
+      {#if hasConfig}
+        <div class="cf-row"><span class="cf-k">Modèle</span><span class="cf-v hi">{s.config.model_name}</span></div>
+        <div class="cf-row"><span class="cf-k">Locuteurs</span><span class="cf-v">{s.config.speakers}</span></div>
+        <div class="cf-row"><span class="cf-k">Warmup</span><span class="cf-v">3% · {s.config.warmup_steps.toLocaleString('fr')} steps</span></div>
+        <div class="cf-row"><span class="cf-k">Grad norm</span><span class="cf-v">{s.grad_norm.toFixed(3)}</span></div>
+        <div class="cf-row"><span class="cf-k">LR actuel</span><span class="cf-v hi">{fmtLr(s.lr)}</span></div>
+        <div class="cf-row"><span class="cf-k">Overfit</span><span class="cf-v {overfitClass}">{overfitLabel}</span></div>
+        <div class="cf-row"><span class="cf-k">Démarré</span><span class="cf-v warn">{startedAgo}</span></div>
+        <div class="cf-row"><span class="cf-k">Maj.</span><span class="cf-v">{updatedAgo}</span></div>
+        <div style="margin-top:6px">
+          <span class="sec-lbl">Datasets · Phase {s.config.phase}</span>
+          <div class="ds-tags">
+            {#each s.config.datasets as ds}
+              {@const inPhase = ds.phases.includes(s.config.phase)}
+              <span class="ds-tag" class:active={inPhase} class:idle={!inPhase}>
+                {ds.name}
+                {#if ds.samples}
+                  <span class="ds-count">{fmtCount(ds.samples)}</span>
+                {/if}
+              </span>
+            {/each}
+          </div>
         </div>
-      </div>
+      {:else}
+        <div class="wait-msg">En attente de connexion du trainer…</div>
+      {/if}
     </div>
 
     <!-- Logs -->
@@ -478,6 +515,7 @@
   /* Header */
   .card-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid #1a2035 }
   .model-name { font-size: 20px; color: #fff; font-weight: 500 }
+  .model-name.wait { color: #3d4a60; font-size: 16px; font-style: italic }
   .model-sub { font-size: 12px; color: #3d4a60; font-family: 'JetBrains Mono', monospace; margin-top: 4px }
   .status { display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; color: #3ecf7a }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #3ecf7a; box-shadow: 0 0 8px #3ecf7a; animation: pulse 2s infinite }
@@ -512,6 +550,9 @@
   .ds-tag { font-size: 9px; border-radius: 4px; padding: 2px 6px; font-family: 'JetBrains Mono', monospace }
   .ds-tag.active { background: rgba(62,207,122,.12); border: 1px solid rgba(62,207,122,.3); color: #3ecf7a }
   .ds-tag.idle { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #3d4a60 }
+  .ds-count { opacity: .6; margin-left: 3px }
+
+  .wait-msg { color: #2e3a55; font-size: 12px; font-family: 'JetBrains Mono', monospace; font-style: italic; padding: 20px 0; text-align: center }
 
   /* Logs */
   .log-col { display: flex; flex-direction: column }

@@ -6,19 +6,8 @@
 
   $: status = $training.status
 
-  function start() {
-    resetTraining()
-    wsTrainClient.connect()
-  }
-
-  function stop() {
-    wsTrainClient.disconnect()
-    training.update(s => ({ ...s, status: 'stopped' }))
-  }
-
   onMount(() => {
-    // Auto-start simulation
-    start()
+    wsTrainClient.connect()
   })
 
   onDestroy(() => {
@@ -30,12 +19,8 @@
   <header class="page-header">
     <a href="/" class="back">← Accueil</a>
     <h1>Monitoring entraînement</h1>
-    <div class="ctrls">
-      {#if status === 'running'}
-        <button class="btn btn-stop" on:click={stop}>Arrêter</button>
-      {:else}
-        <button class="btn btn-start" on:click={start}>Démarrer simulation</button>
-      {/if}
+    <div class="status-pill" class:running={status === 'running'} class:idle={status === 'idle' || status === 'connecting'} class:done={status === 'done'} class:failed={status === 'failed'}>
+      {#if status === 'running'}● Live{:else if status === 'connecting'}○ Connexion…{:else if status === 'done'}● Terminé{:else if status === 'failed'}● Erreur{:else}○ En attente{/if}
     </div>
   </header>
 
@@ -51,10 +36,16 @@
   .monitor-wrap { }
   .back { font-size: 11px; color: var(--muted); text-decoration: none; font-family: 'JetBrains Mono', monospace }
   .back:hover { color: var(--accent) }
-  .ctrls { display: flex; gap: 8px }
-  .btn { border: none; border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; padding: 8px 16px; cursor: pointer }
-  .btn-start { background: rgba(62,207,122,.12); color: #3ecf7a; border: 1px solid rgba(62,207,122,.25) }
-  .btn-start:hover { background: rgba(62,207,122,.22) }
-  .btn-stop { background: rgba(224,85,85,.12); color: #e05555; border: 1px solid rgba(224,85,85,.25) }
-  .btn-stop:hover { background: rgba(224,85,85,.22) }
+  .status-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.04);
+    color: var(--muted);
+  }
+  .status-pill.running { color: #3ecf7a; border-color: rgba(62,207,122,.25); background: rgba(62,207,122,.08) }
+  .status-pill.done { color: #5b8dee; border-color: rgba(91,141,238,.25); background: rgba(91,141,238,.08) }
+  .status-pill.failed { color: #e05555; border-color: rgba(224,85,85,.25); background: rgba(224,85,85,.08) }
 </style>

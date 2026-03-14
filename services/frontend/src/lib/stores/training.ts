@@ -1,30 +1,23 @@
 import { writable } from 'svelte/store'
-import type { TrainingStore, StepEvent, EpochEndEvent } from '$lib/types'
+import type { TrainingStore, TrainingConfig, StepEvent, EpochEndEvent } from '$lib/types'
 
 const HISTORY_LEN = 140
 const LOG_MAX = 20
 
 function defaultConfig(): TrainingStore['config'] {
   return {
-    model_name: 'mel-cnn-bigru',
-    phase: 2,
-    device: 'cuda:0',
-    amp: true,
-    batch_size: 64,
-    lr: 5e-4,
-    total_epochs: 20,
-    warmup_steps: 20653,
-    datasets: [
-      { name: 'TTS-ph1', active: true, phases: [1, 3] },
-      { name: 'AISHELL-1', active: true, phases: [2, 3] },
-      { name: 'THCHS-30', active: true, phases: [2] },
-      { name: 'CV zh-CN', active: true, phases: [2] },
-      { name: 'iCALL', active: false, phases: [3] },
-      { name: 'LATIC', active: false, phases: [3] }
-    ],
-    speakers: 460,
-    total_samples: '2.32M',
-    val_samples: '118k'
+    model_name: '',
+    phase: 0,
+    device: '',
+    amp: false,
+    batch_size: 0,
+    lr: 0,
+    total_epochs: 0,
+    warmup_steps: 0,
+    datasets: [],
+    speakers: 0,
+    total_samples: 0,
+    val_samples: 0
   }
 }
 
@@ -35,7 +28,7 @@ function initial(): TrainingStore {
     config: defaultConfig(),
     epoch: 0,
     step: 0,
-    steps_per_epoch: 34423,
+    steps_per_epoch: 0,
     loss: 0,
     loss_ma5: 0,
     speed_bps: 0,
@@ -45,7 +38,7 @@ function initial(): TrainingStore {
     eta_global_s: 0,
     started_at: 0,
     last_update_at: 0,
-    gpu: { util_pct: 0, temp_c: 0, vram_used_gb: 0, vram_total_gb: 8, power_w: 0 },
+    gpu: { util_pct: 0, temp_c: 0, vram_used_gb: 0, vram_total_gb: 0, power_w: 0 },
     loss_history: [],
     loss_ma_history: [],
     gpu_use_history: [],
@@ -70,6 +63,15 @@ function pushRolling(arr: number[], val: number): number[] {
 }
 
 export const training = writable<TrainingStore>(initial())
+
+export function applyConfigEvent(config: TrainingConfig, run_id: string) {
+  training.update(s => ({
+    ...s,
+    config,
+    run_id,
+    started_at: s.started_at || Date.now()
+  }))
+}
 
 export function applyStepEvent(ev: StepEvent) {
   training.update(s => ({

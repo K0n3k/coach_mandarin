@@ -1,7 +1,8 @@
 FROM golang:1.23-alpine AS build
 
 WORKDIR /src
-RUN go mod init coach_mandarin_api
+COPY go.mod go.sum ./
+RUN go mod download
 COPY main.go .
 RUN CGO_ENABLED=0 go build -o /api main.go
 
