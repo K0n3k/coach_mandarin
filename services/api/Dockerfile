@@ -1,0 +1,12 @@
+FROM golang:1.23-alpine AS build
+
+WORKDIR /src
+RUN go mod init coach_mandarin_api
+COPY main.go .
+RUN CGO_ENABLED=0 go build -o /api main.go
+
+FROM alpine:3.20
+RUN apk add --no-cache wget
+COPY --from=build /api /api
+EXPOSE 8080
+CMD ["/api"]

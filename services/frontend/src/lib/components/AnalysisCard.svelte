@@ -59,8 +59,8 @@
     // Y-axis labels
     const yLabels = ['grave', 'médium', 'aigu']
     yLabels.forEach((l, i) => {
-      cx.fillStyle = 'rgba(255,255,255,.10)'
-      cx.font = `${7 * dpr}px JetBrains Mono,monospace`
+      cx.fillStyle = 'rgba(255,255,255,.12)'
+      cx.font = `${9 * dpr}px JetBrains Mono,monospace`
       cx.textAlign = 'right'
       cx.fillText(l, pL - 4 * dpr, pT + gh - (i + 0.5) / 3 * gh + 3 * dpr)
     })
@@ -102,7 +102,7 @@
 
       // Pinyin + tone mark
       cx.fillStyle = isA ? c.h : 'rgba(255,255,255,.22)'
-      cx.font = `${8 * dpr}px JetBrains Mono,monospace`
+      cx.font = `${10 * dpr}px JetBrains Mono,monospace`
       cx.fillText(s.pinyin + ' ' + MARKS[s.ton_attendu - 1], mid, pT + gh + 27 * dpr)
 
       // Score badge
@@ -110,7 +110,7 @@
       cx.fillStyle = isA ? c.bd : 'rgba(255,255,255,.05)'
       cx.beginPath(); cx.roundRect(bx, by, bw, bh, 3 * dpr); cx.fill()
       cx.fillStyle = isA ? c.h : 'rgba(255,255,255,.3)'
-      cx.font = `500 ${8 * dpr}px JetBrains Mono,monospace`
+      cx.font = `500 ${10 * dpr}px JetBrains Mono,monospace`
       cx.fillText(String(s.scores.global), mid, by + 9 * dpr)
     })
 
@@ -302,13 +302,13 @@
   .card { background: #0d1018; border: 1px solid #1a2035; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 32px rgba(0,0,0,.5) }
 
   /* Header */
-  .card-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 12px; border-bottom: 1px solid #1a2035 }
-  .head-left { display: flex; flex-direction: column; gap: 4px }
-  .head-enonce { font-family: 'Noto Serif SC', serif; font-size: 18px; color: #fff; letter-spacing: .06em }
-  .head-trad { font-size: 11px; color: #3d4a62; font-style: italic }
+  .card-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 22px 14px; border-bottom: 1px solid #1a2035 }
+  .head-left { display: flex; flex-direction: column; gap: 6px }
+  .head-enonce { font-family: 'Noto Serif SC', serif; font-size: 22px; color: #fff; letter-spacing: .06em }
+  .head-trad { font-size: 13px; color: #4d5a70; font-style: italic }
   .head-right { display: flex; align-items: baseline; gap: 4px }
-  .score-val { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 500; color: #fff; line-height: 1 }
-  .score-den { font-size: 11px; color: #2e3a55; font-family: 'JetBrains Mono', monospace }
+  .score-val { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 500; color: #fff; line-height: 1 }
+  .score-den { font-size: 13px; color: #3d4a60; font-family: 'JetBrains Mono', monospace }
 
   /* Graph */
   .graph-zone { position: relative; cursor: default }
@@ -317,33 +317,33 @@
   .hit { flex: 1; cursor: pointer; background: none; border: none; padding: 0 }
 
   /* Legend */
-  .legend { display: flex; gap: 14px; padding: 7px 18px; border-top: 1px solid #1a2035; border-bottom: 1px solid #1a2035 }
-  .leg { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #2e3a55; font-family: 'JetBrains Mono', monospace }
-  .ll { width: 20px; height: 2px; border-radius: 1px }
-  .ld { width: 20px; height: 0; border-top: 2px dashed }
+  .legend { display: flex; gap: 16px; padding: 9px 22px; border-top: 1px solid #1a2035; border-bottom: 1px solid #1a2035 }
+  .leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #3d4a60; font-family: 'JetBrains Mono', monospace }
+  .ll { width: 22px; height: 2px; border-radius: 1px }
+  .ld { width: 22px; height: 0; border-top: 2px dashed }
 
   /* Detail strip */
-  .detail-strip { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid #1a2035; min-height: 52px }
-  .ds-char { font-family: 'Noto Serif SC', serif; font-size: 30px; line-height: 1 }
-  .ds-meta { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto }
-  .ds-py { font-family: 'JetBrains Mono', monospace; font-size: 11px }
-  .ds-tr { font-size: 10px; color: #3d4a60 }
-  .ds-bars { flex: 1; display: flex; flex-direction: column; gap: 3px }
-  .br { display: flex; align-items: center; gap: 6px }
-  .bl { font-size: 8px; color: #2e3a55; width: 50px; text-align: right; font-family: 'JetBrains Mono', monospace }
-  .bt { flex: 1; height: 3px; background: rgba(255,255,255,.05); border-radius: 2px; overflow: hidden }
+  .detail-strip { display: flex; align-items: center; gap: 16px; padding: 12px 22px; border-bottom: 1px solid #1a2035; min-height: 58px }
+  .ds-char { font-family: 'Noto Serif SC', serif; font-size: 34px; line-height: 1 }
+  .ds-meta { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto }
+  .ds-py { font-family: 'JetBrains Mono', monospace; font-size: 13px }
+  .ds-tr { font-size: 12px; color: #4d5a70 }
+  .ds-bars { flex: 1; display: flex; flex-direction: column; gap: 4px }
+  .br { display: flex; align-items: center; gap: 8px }
+  .bl { font-size: 10px; color: #3d4a60; width: 55px; text-align: right; font-family: 'JetBrains Mono', monospace }
+  .bt { flex: 1; height: 4px; background: rgba(255,255,255,.05); border-radius: 2px; overflow: hidden }
   .bf { height: 100%; border-radius: 2px; transition: width .3s cubic-bezier(.4,0,.2,1) }
-  .bv { font-family: 'JetBrains Mono', monospace; font-size: 8px; width: 20px }
-  .ds-hint { font-size: 9px; font-style: italic; flex: 0 0 200px; line-height: 1.5; padding-left: 8px; border-left: 1px solid #1a2035 }
+  .bv { font-family: 'JetBrains Mono', monospace; font-size: 10px; width: 24px }
+  .ds-hint { font-size: 11px; font-style: italic; flex: 0 0 220px; line-height: 1.5; padding-left: 10px; border-left: 1px solid #1a2035 }
 
   /* Feedback */
-  .feedback { padding: 14px 18px }
-  .fb-lbl { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: #2e3a55; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace }
-  .fb-body { font-size: 12px; line-height: 1.9; color: #8892a4 }
-  .zh { font-family: 'Noto Serif SC', serif; font-size: 13px; color: #fff; cursor: pointer; border: none; background: none; padding: 0; border-bottom: 1px dotted rgba(255,255,255,.2); transition: color .12s, border-color .12s; display: inline-block; margin: 0 1px }
+  .feedback { padding: 16px 22px }
+  .fb-lbl { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #3d4a60; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace }
+  .fb-body { font-size: 14px; line-height: 1.9; color: #8892a4 }
+  .zh { font-family: 'Noto Serif SC', serif; font-size: 15px; color: #fff; cursor: pointer; border: none; background: none; padding: 0; border-bottom: 1px dotted rgba(255,255,255,.2); transition: color .12s, border-color .12s; display: inline-block; margin: 0 1px }
   .zh:hover { color: #5b8dee; border-color: #5b8dee }
   .zh.playing { color: #5b8dee }
-  .py-ann { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #2e3a55; margin-left: 1px }
+  .py-ann { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #3d4a60; margin-left: 2px }
 
   /* Streaming cursor */
   .cursor { color: #5b8dee; animation: blink 1s step-end infinite }

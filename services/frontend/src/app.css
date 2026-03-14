@@ -1,0 +1,48 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600&display=swap');
+
+/* Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Palette §8 — CSS variables source de vérité */
+:root {
+  --bg:               #06080d;
+  --panel:            #0d1018;
+  --border:           #1a2035;
+  --text:             #b8bfcc;
+  --muted:            #3d4558;
+  --accent:           #5b8dee;
+
+  /* Scores */
+  --score-excellent:  #3ecf7a;   /* >= 80 */
+  --score-good:       #5b8dee;   /* 60-79 */
+  --score-warn:       #f0a030;   /* 40-59 */
+  --score-bad:        #e05555;   /* < 40  */
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px }
+::-webkit-scrollbar-thumb:hover { background: var(--muted) }

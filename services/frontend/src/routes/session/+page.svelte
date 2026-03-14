@@ -138,15 +138,15 @@
 </div>
 
 <style>
-  .session-page { max-width: 720px; margin: 0 auto; padding: 24px 16px }
+  .session-page { max-width: 860px; margin: 0 auto; padding: 28px 20px }
 
-  .page-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 24px }
-  .page-header h1 { font-size: 16px; color: #fff; font-weight: 500 }
-  .codec-tag { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #5b8dee; background: rgba(91,141,238,.12); border: 1px solid rgba(91,141,238,.25); border-radius: 4px; padding: 1px 6px }
+  .page-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 28px }
+  .page-header h1 { font-size: 20px; color: #fff; font-weight: 500 }
+  .codec-tag { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #5b8dee; background: rgba(91,141,238,.12); border: 1px solid rgba(91,141,238,.25); border-radius: 4px; padding: 2px 8px }
 
-  .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 20px }
+  .controls { display: flex; align-items: center; gap: 14px; margin-bottom: 24px }
 
-  .btn { border: none; border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background .15s }
+  .btn { border: none; border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background .15s }
 
   .btn-record { background: rgba(224,85,85,.15); color: #e05555; border: 1px solid rgba(224,85,85,.3) }
   .btn-record:hover { background: rgba(224,85,85,.25) }
@@ -158,17 +158,17 @@
   .btn-stop:hover { background: rgba(240,160,48,.25) }
   .stop-icon { width: 10px; height: 10px; border-radius: 2px; background: #f0a030 }
 
-  .recording-label { font-size: 11px; color: #f0a030; font-family: 'JetBrains Mono', monospace }
+  .recording-label { font-size: 13px; color: #f0a030; font-family: 'JetBrains Mono', monospace }
 
   .btn-reset { background: rgba(91,141,238,.12); color: #5b8dee; border: 1px solid rgba(91,141,238,.25) }
   .btn-reset:hover { background: rgba(91,141,238,.22) }
 
-  .processing { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #8892a4 }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(91,141,238,.2); border-top-color: #5b8dee; border-radius: 50%; animation: spin .8s linear infinite }
+  .processing { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #8892a4 }
+  .spinner { width: 18px; height: 18px; border: 2px solid rgba(91,141,238,.2); border-top-color: #5b8dee; border-radius: 50%; animation: spin .8s linear infinite }
   @keyframes spin { to { transform: rotate(360deg) } }
 
-  .error-box { background: rgba(224,85,85,.08); border: 1px solid rgba(224,85,85,.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #e05555; display: flex; flex-direction: column; gap: 2px }
-  .error-code { font-family: 'JetBrains Mono', monospace; font-size: 9px; opacity: .6 }
+  .error-box { background: rgba(224,85,85,.08); border: 1px solid rgba(224,85,85,.2); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #e05555; display: flex; flex-direction: column; gap: 4px }
+  .error-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: .6 }
 
   .card-wrapper { animation: fadeIn .3s ease-out }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }

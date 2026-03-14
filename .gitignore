@@ -1,4 +1,3 @@
-cat > .gitignore << 'EOF'
 # Dataset — lien symbolique vers disque externe, jamais versionné
 dataset/
 
@@ -30,4 +29,3 @@ build/
 # OS
 .DS_Store
 Thumbs.db
-EOF
