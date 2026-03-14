@@ -22,9 +22,12 @@ build/
 .env.*
 !.env.example
 
-# IDE
-.vscode/settings.json
+# IDE / config locale
+.vscode/
 .idea/
+
+# GitHub config locale
+.github/
 
 # OS
 .DS_Store
